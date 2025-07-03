@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Futuristic Hero Sections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            cursor: none;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            overflow-x: hidden;
+        }
+        
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00f5ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.1s ease;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #00f5ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.6;
+        }
+        
+        .magnetic-element {
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .magnetic-element:hover {
+            transform: scale(1.1);
+        }
+        
+        .text-glow {
+            text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
+        }
+        
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .parallax-element {
+            will-change: transform;
+        }
+        
+        .morphing-bg {
+            background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
+            background-size: 400% 400%;
+            animation: morphing 8s ease-in-out infinite;
+        }
+        
+        @keyframes morphing {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .floating-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .floating-card:hover {
+            transform: translateZ(50px) rotateX(10deg) rotateY(10deg);
+        }
+        
+        .nav-indicator {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+        
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 12px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-dot.active {
+            background: #00f5ff;
+            transform: scale(1.3);
+            box-shadow: 0 0 20px #00f5ff;
+        }
+        
+        .nav-dot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: #00f5ff;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-dot.active::after {
+            width: 20px;
+            height: 20px;
+            opacity: 0.3;
+        }
+        
+        .particle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00f5ff;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .wave-text {
+            display: inline-block;
+            animation: wave 2s ease-in-out infinite;
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .tilt-element {
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .holographic-border {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .holographic-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .holographic-border:hover::before {
+            left: 100%;
+        }
+        
+        .glitch-text {
+            position: relative;
+            color: #00f5ff;
+            font-weight: bold;
+        }
+        
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch-text::before {
+            animation: glitch-1 2s infinite;
+            color: #ff006e;
+            z-index: -1;
+        }
+        
+        .glitch-text::after {
+            animation: glitch-2 2s infinite;
+            color: #8338ec;
+            z-index: -2;
+        }
+        
+        @keyframes glitch-1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        @keyframes glitch-2 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(-2px, 2px); }
+        }
+        
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <!-- Custom Cursor -->
+    <div class="custom-cursor"></div>
+    
+    <!-- Navigation -->
+    <div class="nav-indicator">
+        <div class="nav-dot active magnetic-element" data-section="0"></div>
+        <div class="nav-dot magnetic-element" data-section="1"></div>
+        <div class="nav-dot magnetic-element" data-section="2"></div>
+        <div class="nav-dot magnetic-element" data-section="3"></div>
+    </div>
+
+    <!-- Hero Section 1: 3D Floating City -->
+    <section class="hero-section min-h-screen relative overflow-hidden" id="hero-1">
+        <div class="absolute inset-0 morphing-bg"></div>
+        <canvas id="cityCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        
+        <div class="particle-container">
+            <div class="particle" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+            <div class="particle" style="top: 60%; left: 80%; animation-delay: 2s;"></div>
+            <div class="particle" style="top: 40%; left: 30%; animation-delay: 4s;"></div>
+            <div class="particle" style="top: 80%; left: 60%; animation-delay: 6s;"></div>
+        </div>
+        
+        <div class="relative z-10 flex items-center justify-center min-h-screen px-4">
+            <div class="text-center max-w-6xl mx-auto">
+                <div class="scroll-reveal">
+                    <div class="mb-8">
+                        <span class="text-cyan-400 text-sm font-mono tracking-widest">DIMENSION.3D.LOADED</span>
+                    </div>
+                    
+                    <h1 class="text-6xl md:text-8xl font-bold mb-6 text-glow">
+                        <span class="glitch-text wave-text" data-text="CYBER">CYBER</span><br>
+                        <span class="glitch-text wave-text" data-text="CITY" style="animation-delay: 0.5s;">CITY</span>
+                    </h1>
+                    
+                    <p class="text-xl md:text-2xl mb-8 text-gray-300 max-w-3xl mx-auto">
+                        Experience the future in three dimensions where virtual architecture meets digital reality
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <button class="floating-card holographic-border px-8 py-4 rounded-full font-semibold text-cyan-400 magnetic-element">
+                            ENTER SIMULATION
+                        </button>
+                        <button class="floating-card holographic-border px-8 py-4 rounded-full font-semibold text-purple-400 magnetic-element">
+                            EXPLORE CITY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hero Section 2: Geometric Playground -->
+    <section class="hero-section min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900" id="hero-2">
+        <canvas id="geometryCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        
+        <div class="relative z-10 flex items-center justify-center min-h-screen px-4">
+            <div class="text-center max-w-5xl mx-auto">
+                <div class="scroll-reveal">
+                    <div class="mb-8">
+                        <span class="text-purple-400 text-sm font-mono tracking-widest">GEOMETRY.INITIALIZED</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+                        DIMENSIONAL<br>MATRIX
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl mb-8 text-gray-300 max-w-2xl mx-auto">
+                        Navigate through impossible geometries and experience reality-bending mathematical beauty
+                    </p>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                        <div class="floating-card tilt-element rounded-2xl p-6 magnetic-element">
+                            <div class="text-3xl mb-4">🔮</div>
+                            <h3 class="text-xl font-semibold mb-2 text-purple-300">Reality Mesh</h3>
+                            <p class="text-gray-400">Bend space-time with interactive 3D meshes</p>
+                        </div>
+                        
+                        <div class="floating-card tilt-element rounded-2xl p-6 magnetic-element">
+                            <div class="text-3xl mb-4">⚡</div>
+                            <h3 class="text-xl font-semibold mb-2 text-cyan-300">Quantum Core</h3>
+                            <p class="text-gray-400">Harness the power of dimensional computing</p>
+                        </div>
+                        
+                        <div class="floating-card tilt-element rounded-2xl p-6 magnetic-element">
+                            <div class="text-3xl mb-4">🌌</div>
+                            <h3 class="text-xl font-semibold mb-2 text-pink-300">Infinite Loop</h3>
+                            <p class="text-gray-400">Explore endless mathematical possibilities</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <button class="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-full font-semibold magnetic-element hover:scale-110 transition-transform">
+                            ENTER MATRIX
+                        </button>
+                        <button class="floating-card px-8 py-4 rounded-full font-semibold text-purple-300 magnetic-element">
+                            VIEW DIMENSIONS
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hero Section 3: Particle Universe -->
+    <section class="hero-section min-h-screen relative overflow-hidden bg-black" id="hero-3">
+        <canvas id="particleCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        
+        <div class="relative z-10 flex items-center justify-center min-h-screen px-4">
+            <div class="text-center max-w-4xl mx-auto">
+                <div class="scroll-reveal">
+                    <div class="mb-8">
+                        <span class="text-green-400 text-sm font-mono tracking-widest">PARTICLE.SYSTEM.ACTIVE</span>
+                    </div>
+                    
+                    <h1 class="text-6xl md:text-8xl font-bold mb-6 text-green-400 text-glow">
+                        NEURAL<br>NETWORK
+                    </h1>
+                    
+                    <p class="text-xl md:text-2xl mb-8 text-gray-300 max-w-2xl mx-auto">
+                        Witness the birth of artificial consciousness through interactive neural pathways
+                    </p>
+                    
+                    <div class="mb-8">
+                        <div class="floating-card rounded-3xl p-8 magnetic-element max-w-2xl mx-auto">
+                            <div class="grid grid-cols-3 gap-6 text-center">
+                                <div>
+                                    <div class="text-3xl font-bold text-green-400 mb-2">10K+</div>
+                                    <div class="text-sm text-gray-400">Active Nodes</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold text-green-400 mb-2">∞</div>
+                                    <div class="text-sm text-gray-400">Connections</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold text-green-400 mb-2">99.9%</div>
+                                    <div class="text-sm text-gray-400">Accuracy</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <button class="bg-green-400 text-black px-8 py-4 rounded-full font-semibold magnetic-element hover:scale-110 transition-transform">
+                            ACTIVATE NETWORK
+                        </button>
+                        <button class="border border-green-400 px-8 py-4 rounded-full font-semibold text-green-400 magnetic-element hover:bg-green-400 hover:text-black transition-all">
+                            EXPLORE NEURONS
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hero Section 4: Holographic Interface -->
+    <section class="hero-section min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900" id="hero-4">
+        <canvas id="hologramCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        
+        <div class="relative z-10 flex items-center justify-center min-h-screen px-4">
+            <div class="text-center max-w-6xl mx-auto">
+                <div class="scroll-reveal">
+                    <div class="mb-8">
+                        <span class="text-pink-400 text-sm font-mono tracking-widest">HOLOGRAM.INTERFACE.READY</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                        QUANTUM<br>REALITY
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl mb-12 text-gray-300 max-w-3xl mx-auto">
+                        Step into the future where thought becomes reality and digital dreams come to life
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 mb-12">
+                        <div class="floating-card tilt-element rounded-3xl p-8 magnetic-element text-left">
+                            <h3 class="text-2xl font-semibold mb-4 text-pink-300">Mind Interface</h3>
+                            <p class="text-gray-400 mb-4">Connect your consciousness directly to the quantum field</p>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
+                                <span class="text-sm text-pink-400">Neural Link Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="floating-card tilt-element rounded-3xl p-8 magnetic-element text-left">
+                            <h3 class="text-2xl font-semibold mb-4 text-purple-300">Reality Engine</h3>
+                            <p class="text-gray-400 mb-4">Manipulate the fabric of digital space-time</p>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                                <span class="text-sm text-purple-400">Quantum Processor Online</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <button class="bg-gradient-to-r from-pink-500 to-purple-500 px-10 py-4 rounded-full font-semibold magnetic-element hover:scale-110 transition-transform">
+                            ENTER QUANTUM REALM
+                        </button>
+                        <button class="floating-card px-10 py-4 rounded-full font-semibold text-pink-300 magnetic-element">
+                            EXPLORE REALITY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.custom-cursor');
+        const trails = [];
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Create trail effect
+            if (trails.length < 5) {
+                const trail = document.createElement('div');
+                trail.className = 'cursor-trail';
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                document.body.appendChild(trail);
+                trails.push(trail);
+                
+                setTimeout(() => {
+                    trail.remove();
+                    trails.shift();
+                }, 500);
+            }
+        });
+
+        // Magnetic Effect
+        document.querySelectorAll('.magnetic-element').forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'scale(2)';
+                cursor.style.backgroundColor = 'rgba(0, 245, 255, 0.3)';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'scale(1)';
+                cursor.style.backgroundColor = 'transparent';
+            });
+        });
+
+        // Tilt Effect
+        document.querySelectorAll('.tilt-element').forEach(element => {
+            element.addEventListener('mousemove', (e) => {
+                const rect = element.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                element.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        });
+
+        // Scroll Reveal Animation
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.scroll-reveal');
+            
+            reveals.forEach(reveal => {
+                const windowHeight = window.innerHeight;
+                const revealTop = reveal.getBoundingClientRect().top;
+                const revealPoint = 150;
+                
+                if (revealTop < windowHeight - revealPoint) {
+                    reveal.classList.add('revealed');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Navigation
+        document.querySelectorAll('.nav-dot').forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                const section = document.getElementById(`hero-${index + 1}`);
+                section.scrollIntoView({ behavior: 'smooth' });
+                
+                document.querySelectorAll('.nav-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.hero-section');
+            const navDots = document.querySelectorAll('.nav-dot');
+            let current = '';
+            
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = index;
+                }
+            });
+            
+            navDots.forEach((dot, index) => {
+                dot.classList.remove('active');
+                if (index === current) {
+                    dot.classList.add('active');
+                }
+            });
+        });
+
+        // Three.js Scene 1: 3D City
+        function initCityScene() {
+            const canvas = document.getElementById('cityCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create city buildings
+            const buildings = [];
+            for (let i = 0; i < 50; i++) {
+                const geometry = new THREE.BoxGeometry(
+                    Math.random() * 2 + 1,
+                    Math.random() * 10 + 2,
+                    Math.random() * 2 + 1
+                );
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(Math.random() * 0.3 + 0.5, 0.8, 0.5),
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const building = new THREE.Mesh(geometry, material);
+                
+                building.position.x = (Math.random() - 0.5) * 50;
+                building.position.z = (Math.random() - 0.5) * 50;
+                building.position.y = building.geometry.parameters.height / 2;
+                
+                scene.add(building);
+                buildings.push(building);
+            }
+            
+            camera.position.set(0, 10, 20);
+            camera.lookAt(0, 0, 0);
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate buildings
+                buildings.forEach((building, index) => {
+                    building.rotation.y += 0.01 * (index % 3 + 1);
+                });
+                
+                // Camera movement
+                camera.position.x = Math.sin(Date.now() * 0.001) * 20;
+                camera.position.z = Math.cos(Date.now() * 0.001) * 20;
+                camera.lookAt(0, 0, 0);
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Three.js Scene 2: Geometric Shapes
+        function initGeometryScene() {
+            const canvas = document.getElementById('geometryCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create geometric shapes
+            const shapes = [];
+            const geometries = [
+                new THREE.TetrahedronGeometry(2),
+                new THREE.OctahedronGeometry(2),
+                new THREE.IcosahedronGeometry(2),
+                new THREE.DodecahedronGeometry(2)
+            ];
+            
+            for (let i = 0; i < 20; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6),
+                    wireframe: true
+                });
+                const shape = new THREE.Mesh(geometry, material);
+                
+                shape.position.x = (Math.random() - 0.5) * 30;
+                shape.position.y = (Math.random() - 0.5) * 30;
+                shape.position.z = (Math.random() - 0.5) * 30;
+                
+                scene.add(shape);
+                shapes.push(shape);
+            }
+            
+            camera.position.z = 15;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                shapes.forEach((shape, index) => {
+                    shape.rotation.x += 0.01 * (index % 3 + 1);
+                    shape.rotation.y += 0.01 * (index % 2 + 1);
+                    shape.rotation.z += 0.01 * (index % 4 + 1);
+                });
+                
+                camera.position.x = Math.sin(Date.now() * 0.0005) * 5;
+                camera.position.y = Math.cos(Date.now() * 0.0007) * 5;
+                camera.lookAt(0, 0, 0);
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+        }
+
+        // Three.js Scene 3: Particle System
+        function initParticleScene() {
+            const canvas = document.getElementById('particleCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create particle system
+            const particleCount = 1000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i + 1] = (Math.random() - 0.5) * 100;
+                positions[i + 2] = (Math.random() - 0.5) * 100;
+                colors[i] = Math.random();
+                colors[i + 1] = Math.random();
+                colors[i + 2] = Math.random();
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            const material = new THREE.PointsMaterial({
+                size: 0.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            const particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            camera.position.z = 50;
+            camera.position.y = 20;
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particles.rotation.x += 0.001;
+                particles.rotation.y += 0.001;
+                
+                camera.position.x = Math.sin(Date.now() * 0.0005) * 50;
+                camera.position.y = Math.cos(Date.now() * 0.0007) * 20;
+                camera.lookAt(0, 0, 0);
+                
+                renderer.render(scene, camera);
+            }
+            animate();
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        // Three.js Scene 4: Holographic Interface
+        function initHologramScene() {
+            const canvas = document.getElementById('hologramCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create holographic effect
+            const geometry = new THREE.PlaneGeometry(10, 10);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            const plane = new THREE.Mesh(geometry, material);
+            plane.rotation.x = Math.PI / 2;
+            scene.add(plane);
+            
+            camera.position.z = 15;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                plane.rotation.z += 0.01;
+                
+                camera.position.x = Math.sin(Date.now() * 0.0005) * 15;
+                camera.position.y = Math.cos(Date.now() * 0.0007) * 15;
+                camera.lookAt(0, 0, 0);
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        // Initialize all scenes
+        initCityScene();
+        initGeometryScene();
+        initParticleScene();
+        initHologramScene();
+    </script>
+</body>
+</html>
